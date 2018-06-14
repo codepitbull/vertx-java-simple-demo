@@ -10,9 +10,14 @@ import io.vertx.reactivex.ext.web.RoutingContext;
 import io.vertx.reactivex.ext.web.handler.StaticHandler;
 import io.vertx.reactivex.ext.web.handler.sockjs.SockJSHandler;
 
+import java.util.ArrayList;
+import java.util.List;
+
 public class HttpEventBusVerticle extends AbstractVerticle {
 
     public static final int PORT = 8666;
+
+    public List<Integer> dummeListe = new ArrayList<>();
 
     @Override
     public void start() throws Exception {
@@ -25,12 +30,15 @@ public class HttpEventBusVerticle extends AbstractVerticle {
 
         vertx
             .periodicStream(4000)
-            .handler(t -> vertx.eventBus().<Buffer>rxSend("enlighten.me", true)
-                    .toMaybe()
-                    .subscribe(
-                        enlightenment -> vertx.eventBus().send("example-browser", enlightenment.body()),
-                        throwable -> vertx.eventBus().send("example-browser", "No enlightenmnet today: "+throwable.getMessage()),
-                        () -> System.out.println("Completed"))
+            .handler(elapsedTime ->
+                    vertx
+                            .eventBus()
+                            .<Buffer>rxSend("enlighten.me", true)
+                            .toMaybe()
+                            .subscribe(
+                                enlightenment -> vertx.eventBus().send("example-browser", enlightenment.body()),
+                                throwable -> vertx.eventBus().send("example-browser", "No enlightenmnet today: "+throwable.getMessage()),
+                                () -> System.out.println("Completed"))
             );
 
         vertx.eventBus().consumer("example-server")
